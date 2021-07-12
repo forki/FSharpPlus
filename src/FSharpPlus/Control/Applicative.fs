@@ -49,16 +49,25 @@ type Apply =
            | true, vx -> dct.Add (k, vf vx)
            | _        -> ()
        dct
+
+    static member        ``<*>`` (f: IDictionary<'Key,_>, x: IDictionary<'Key,'T> , [<Optional>]_output: IDictionary<'Key,'U>  , [<Optional>]_mthd: Apply) : IDictionary<'Key,'U> =
+       let dct = Dictionary ()
+       for KeyValue(k, vx) in x do
+           match f.TryGetValue k with
+           | true, vf -> dct.Add (k, vf vx)
+           | _        -> ()
+       dct :> IDictionary<'Key,'U>
+    
     #if !FABLE_COMPILER
     static member        ``<*>`` (f: Expr<'T->'U>, x: Expr<'T>, [<Optional>]_output: Expr<'U>, [<Optional>]_mthd: Apply) = Expr.Cast<'U> (Expr.Application (f, x))
     #endif
+    
     static member        ``<*>`` (f: ('T->'U) ResizeArray, x: 'T ResizeArray, [<Optional>]_output: 'U ResizeArray, [<Optional>]_mthd: Apply) = ResizeArray.apply f x : 'U ResizeArray
 
     static member inline Invoke (f: '``Applicative<'T -> 'U>``) (x: '``Applicative<'T>``) : '``Applicative<'U>`` =
         let inline call (mthd : ^M, input1: ^I1, input2: ^I2, output: ^R) =
             ((^M or ^I1 or ^I2 or ^R) : (static member ``<*>`` : _*_*_*_ -> _) input1, input2, output, mthd)
         call(Unchecked.defaultof<Apply>, f, x, Unchecked.defaultof<'``Applicative<'U>``>)
-
 
 #endif
 
